@@ -288,11 +288,14 @@ def main():
             object         = dict(),
             src            = dict(),
             dest           = dict(default=None),
-            mode           = dict(choices=['get', 'put', 'delete', 'create', 'geturl', 'getstr'], required=True),
+            mode           = dict(choices=['list', 'get', 'put', 'delete', 'create', 'geturl', 'getstr'], required=True),
             expiry         = dict(default=600, aliases=['expiration']),
             s3_url         = dict(aliases=['S3_URL']),
             overwrite      = dict(aliases=['force'], default=True, type='bool'),
-            metadata      = dict(type='dict'),
+            metadata       = dict(type='dict'),
+            prefix         = dict(default=None),
+            marker         = dict(default=None),
+            max_keys       = dict(default=1000),
         ),
     )
     module = AnsibleModule(argument_spec=argument_spec)
@@ -307,6 +310,9 @@ def main():
     s3_url = module.params.get('s3_url')
     overwrite = module.params.get('overwrite')
     metadata = module.params.get('metadata')
+    prefix = module.params.get('prefix')
+    marker = module.params.get('marker')
+    max_keys = module.params.get('max_keys')
 
     ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
 
@@ -351,6 +357,14 @@ def main():
             s3 = boto.connect_s3(aws_access_key, aws_secret_key)
         except boto.exception.NoAuthHandlerFound, e:
             module.fail_json(msg = str(e))
+
+    if mode == 'list':
+        keys = []
+        bucketrtn = s3.get_bucket(bucket)
+        list = bucketrtn.get_all_keys(prefix=prefix, marker=marker, max_keys=max_keys)
+        for key in list:
+            keys.append(key.key)
+        module.exit_json(msg="GET operation complete", s3_keys=keys, changed=True)
 
     # If our mode is a GET operation (download), go through the procedure as appropriate ...
     if mode == 'get':
