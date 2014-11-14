@@ -173,6 +173,19 @@ def bucket_check(module, s3, bucket):
     else:
         return False
 
+def get_bucket(module, s3, bucket):
+    try:
+        return s3.lookup(bucket)
+    except s3.provider.storage_response_error, e:
+        module.fail_json(msg= str(e))
+
+def list_keys(module, bucket_object, prefix, marker, max_keys):
+    all_keys = bucket_object.get_all_keys(prefix=prefix, marker=marker, max_keys=max_keys)
+
+    keys = map((lambda x: x.key), all_keys)
+
+    module.exit_json(msg="LIST operation complete", s3_keys=keys)
+
 def create_bucket(module, s3, bucket, location=Location.DEFAULT):
     try:
         bucket = s3.create_bucket(bucket, location=location)
@@ -359,12 +372,14 @@ def main():
             module.fail_json(msg = str(e))
 
     if mode == 'list':
-        keys = []
-        bucketrtn = s3.get_bucket(bucket)
-        list = bucketrtn.get_all_keys(prefix=prefix, marker=marker, max_keys=max_keys)
-        for key in list:
-            keys.append(key.key)
-        module.exit_json(msg="GET operation complete", s3_keys=keys, changed=True)
+        bucket_object = get_bucket(module, s3, bucket)
+
+        # If the bucket does not exist then bail out
+        if bucket_object is None:
+            module.fail_json(msg="Target bucket (%s) cannot be found"% bucket, failed=True)
+
+        list_keys(module, bucket_object, prefix, marker, max_keys)
+
 
     # If our mode is a GET operation (download), go through the procedure as appropriate ...
     if mode == 'get':
