@@ -219,6 +219,7 @@ class SSLValidationHandler(urllib2.BaseHandler):
         # Write the dummy ca cert if we are running on Mac OS X
         if platform == 'Darwin':
             os.write(tmp_fd, DUMMY_CA_CERT)
+            paths_checked.append('/usr/local/etc/openssl')
 
         # for all of the paths, find any  .crt or .pem files
         # and compile them into single temp file for use
@@ -313,7 +314,7 @@ def url_argument_spec():
     )
 
 
-def fetch_url(module, url, data=None, headers=None, method=None, 
+def fetch_url(module, url, data=None, headers=None, method=None,
               use_proxy=True, force=False, last_mod_time=None, timeout=10):
     '''
     Fetches a file from an HTTP/FTP server using urllib2
@@ -411,11 +412,11 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     else:
         request = urllib2.Request(url, data)
 
-    # add the custom agent header, to help prevent issues 
-    # with sites that block the default urllib agent string 
+    # add the custom agent header, to help prevent issues
+    # with sites that block the default urllib agent string
     request.add_header('User-agent', module.params.get('http_agent'))
 
-    # if we're ok with getting a 304, set the timestamp in the 
+    # if we're ok with getting a 304, set the timestamp in the
     # header, otherwise make sure we don't get a cached copy
     if last_mod_time and not force:
         tstamp = last_mod_time.strftime('%a, %d %b %Y %H:%M:%S +0000')
