@@ -25,6 +25,7 @@ import glob
 import re
 import collections
 import operator as py_operator
+import itertools
 from ansible import errors
 from ansible.utils import md5s, checksum_s
 from distutils.version import LooseVersion, StrictVersion
@@ -155,6 +156,9 @@ def unique(a):
             if x not in c:
                 c.append(x)
     return c
+
+def flatten(a):
+    return itertools.chain(*a)
 
 def intersect(a, b):
     if isinstance(a,collections.Hashable) and isinstance(b,collections.Hashable):
@@ -313,6 +317,7 @@ class FilterModule(object):
             'union': union,
             'min' : min,
             'max' : max,
+            'flatten' : flatten,
 
             # version comparison
             'version_compare': version_compare,
