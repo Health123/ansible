@@ -28,6 +28,7 @@ import re
 import crypt
 import hashlib
 import string
+import itertools
 from functools import partial
 import operator as py_operator
 from random import SystemRandom, shuffle
@@ -288,6 +289,9 @@ def get_encrypted_password(password, hashtype='sha512', salt=None):
 def to_uuid(string):
     return str(uuid.uuid5(UUID_NAMESPACE_ANSIBLE, str(string)))
 
+def flatten(a):
+    return itertools.chain(*a)
+
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
 
@@ -362,6 +366,7 @@ class FilterModule(object):
             # list
             # version comparison
             'version_compare': version_compare,
+            'flatten' : flatten,
 
             # random stuff
             'random': rand,
